@@ -118,7 +118,7 @@ def drop_database(bench_type):
 @task
 def create_database(bench_type):
     _, host_name = get_cluster_name_and_host(bench_type)
-    local("mysql -u {} -p {} -h {} -P {} -e 'create database if not exists {}'".format('root',
+    local("mysql --user={} --password={} -h {} -P {} -e 'create database if not exists {}'".format('root',
                                                                                        '',
                                                                                        host_name,
                                                                                        '4000',

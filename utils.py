@@ -4,7 +4,7 @@ import os
 from fabric.api import local, task
 
 # Some FIXTURES
-SCRIPT_DIR = '/data1/workspace/ottertune-test/script'
+SCRIPT_DIR = '/data1/workspace/xyq/ottertune-test/script'
 
 
 @task

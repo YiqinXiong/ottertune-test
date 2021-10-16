@@ -100,19 +100,12 @@ def drop_database(bench_type):
     #                                                                                        dconf.DB_NAME))
     cluster_name, host_name = get_cluster_name_and_host(bench_type)
 
-    test_exist = local(
-        "mysql --user={} --password={} -h {} -P {} -e 'use {}'".format('root',
-                                                                       '',
-                                                                       host_name,
-                                                                       '4000',
-                                                                       bench_type))
-    if test_exist.failed:
-        pass
-    else:
-        # local("tiup cluster clean {} --all --ignore-role prometheus --yes".format(dconf.TIDB_CLUSTER_NAME))
-        # local("tiup cluster start {}".format(dconf.TIDB_CLUSTER_NAME))
-        run_sql_script('clean_tidb_data.sh', cluster_name)
-        run_sql_script('start_cluster.sh', cluster_name)
+    # local("tiup cluster clean {} --all --ignore-role prometheus --yes".format(dconf.TIDB_CLUSTER_NAME))
+    # local("tiup cluster start {}".format(dconf.TIDB_CLUSTER_NAME))
+    run_sql_script('clean_tidb_data.sh', cluster_name)
+    run_sql_script('start_cluster.sh', cluster_name)
+
+
 
 
 @task
@@ -224,3 +217,11 @@ def run(bench_type):
     restore_database(bench_type)
     # 运行测试，结果导出在BENCHBASE_HOME/log/{bench_type}_run.log
     run_benchbase_bg(bench_type)
+
+@task
+def load(bench_type):
+    # 导入前先删除原有数据库
+    drop_database(bench_type)
+    # 执行load操作
+    load_benchbase_bg(bench_type)
+

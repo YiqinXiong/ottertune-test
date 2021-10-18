@@ -40,6 +40,7 @@ BENCHBASE_LOG_DIR = os.path.join(BENCHBASE_HOME, 'log')
 TEST_HOME = os.path.dirname(os.path.realpath(__file__))
 TEST_LOG_DIR = os.path.join(TEST_HOME, 'log')
 TEST_LOG_PATH = os.path.join(TEST_LOG_DIR, 'test.log')
+SYSBENCH_CONF_PATH = os.path.join(TEST_HOME, 'sysbench_config')
 
 # Fabric settings
 fabric_output.update({
@@ -124,22 +125,37 @@ def change_conf(bench_type):
 def load_benchbase_bg(bench_type):
     create_database(bench_type)
 
-    config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
-    log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
-    cmd = "java -jar benchbase.jar -b {} -c {} --create=true --load=true > {} 2>&1 &". \
-        format(bench_type, config_path, log_path)
-    with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
+    if bench_type == 'sysbench':
+        config_path = SYSBENCH_CONF_PATH
+        log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
+        cmd = f"nohup sysbench --config-file={config_path} oltp_point_select " \
+              f"--tables=32 --table-size=10000 prepare > {log_path} 2>&1 &"
         local(cmd)
+    else:
+        config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
+        log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
+        cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --create=true --load=true > {log_path} 2>&1 &"
+        with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
+            local(cmd)
 
 
 @task
-def run_benchbase_bg(bench_type):
-    config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
-    log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
-    cmd = "java -jar benchbase.jar -b {} -c {} --execute=true -s 5 > {} 2>&1 &". \
-        format(bench_type, config_path, log_path)
-    with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
+def run_benchbase_bg(bench_type, sysbench_run_type):
+    if bench_type == 'sysbench':
+        if sysbench_run_type not in ['point_select', 'update_index', 'read_only']:
+            raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
+        config_path = SYSBENCH_CONF_PATH
+        log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
+        cmd = f"nohup sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
+              f"--tables=32 --table-size=10000 run > {log_path} 2>&1 &"
         local(cmd)
+    else:
+        config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
+        log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
+        cmd = "java -jar benchbase.jar -b {} -c {} --execute=true -s 5 > {} 2>&1 &". \
+            format(bench_type, config_path, log_path)
+        with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
+            local(cmd)
 
 
 @task
@@ -205,11 +221,11 @@ def clean_conf(bench_type):
 
 
 @task
-def run(bench_type):
+def run(bench_type, sysbench_run_type=''):
     # 导入测试数据（需保证数据存在、lightning toml中data_dir正确）
     restore_database(bench_type)
     # 运行测试，结果导出在BENCHBASE_HOME/log/{bench_type}_run.log
-    run_benchbase_bg(bench_type)
+    run_benchbase_bg(bench_type, sysbench_run_type)
 
 
 @task

@@ -28,7 +28,7 @@ from utils import (run_sql_script, FabricException, file_exists_local)
 
 # Some FIXTURES
 WORKLOADS = ['tpcc', 'tpch', 'tatp',
-             'sysbench', 'smallbank', 'ycsb']
+             'smallbank', 'sysbench', 'ycsb']
 CLUSTERS = ['tidb-1',
             'tidb-2',
             'tidb-3']
@@ -102,16 +102,14 @@ def drop_database(bench_type):
     run_sql_script('start_cluster.sh', cluster_name)
 
 
-
-
 @task
 def create_database(bench_type):
     _, host_name = get_cluster_name_and_host(bench_type)
     local("mysql --user={} --password={} -h {} -P {} -e 'create database if not exists {}'".format('root',
-                                                                                       '',
-                                                                                       host_name,
-                                                                                       '4000',
-                                                                                       bench_type))
+                                                                                                   '',
+                                                                                                   host_name,
+                                                                                                   '4000',
+                                                                                                   bench_type))
 
 
 @task
@@ -124,7 +122,6 @@ def change_conf(bench_type):
 
 @task
 def load_benchbase_bg(bench_type):
-
     create_database(bench_type)
 
     config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
@@ -214,10 +211,10 @@ def run(bench_type):
     # 运行测试，结果导出在BENCHBASE_HOME/log/{bench_type}_run.log
     run_benchbase_bg(bench_type)
 
+
 @task
 def load(bench_type):
     # 导入前先删除原有数据库
     drop_database(bench_type)
     # 执行load操作
     load_benchbase_bg(bench_type)
-

@@ -41,6 +41,7 @@ TEST_HOME = os.path.dirname(os.path.realpath(__file__))
 TEST_LOG_DIR = os.path.join(TEST_HOME, 'log')
 TEST_LOG_PATH = os.path.join(TEST_LOG_DIR, 'test.log')
 SYSBENCH_CONF_PATH = os.path.join(TEST_HOME, 'sysbench_config')
+SYSBENCH_RUN_TYPE = ['point_select', 'update_index', 'read_only', 'read_write', 'write_only']
 
 # Fabric settings
 fabric_output.update({
@@ -142,7 +143,7 @@ def load_benchbase_bg(bench_type):
 @task
 def run_benchbase_bg(bench_type, sysbench_run_type):
     if bench_type == 'sysbench':
-        if sysbench_run_type not in ['point_select', 'update_index', 'read_only']:
+        if sysbench_run_type not in SYSBENCH_RUN_TYPE:
             raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
         config_path = SYSBENCH_CONF_PATH + '_run'
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')

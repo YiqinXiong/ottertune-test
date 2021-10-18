@@ -128,7 +128,7 @@ def load_benchbase_bg(bench_type):
     if bench_type == 'sysbench':
         config_path = SYSBENCH_CONF_PATH
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
-        cmd = f"nohup sysbench --config-file={config_path} oltp_point_select " \
+        cmd = f"sysbench --config-file={config_path} oltp_point_select " \
               f"--tables=32 --table-size=10000 prepare > {log_path} 2>&1 &"
         local(cmd)
     else:
@@ -146,14 +146,13 @@ def run_benchbase_bg(bench_type, sysbench_run_type):
             raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
         config_path = SYSBENCH_CONF_PATH
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
-        cmd = f"nohup sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
+        cmd = f"sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
               f"--tables=32 --table-size=10000 run > {log_path} 2>&1 &"
         local(cmd)
     else:
         config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
-        cmd = "java -jar benchbase.jar -b {} -c {} --execute=true -s 5 > {} 2>&1 &". \
-            format(bench_type, config_path, log_path)
+        cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --execute=true -s 5 > {log_path} 2>&1 &"
         with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
             local(cmd)
 

@@ -126,7 +126,7 @@ def load_benchbase_bg(bench_type):
     create_database(bench_type)
 
     if bench_type == 'sysbench':
-        config_path = SYSBENCH_CONF_PATH
+        config_path = SYSBENCH_CONF_PATH + '_load'
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
         cmd = f"sysbench --config-file={config_path} oltp_point_select " \
               f"--tables=32 --table-size=10000000 prepare > {log_path} 2>&1 &"
@@ -144,7 +144,7 @@ def run_benchbase_bg(bench_type, sysbench_run_type):
     if bench_type == 'sysbench':
         if sysbench_run_type not in ['point_select', 'update_index', 'read_only']:
             raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
-        config_path = SYSBENCH_CONF_PATH
+        config_path = SYSBENCH_CONF_PATH + '_run'
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
         cmd = f"sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
               f"--tables=32 --table-size=10000000 run > {log_path} 2>&1 &"

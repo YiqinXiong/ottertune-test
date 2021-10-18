@@ -28,11 +28,7 @@ from utils import (run_sql_script, FabricException, file_exists_local)
 
 # Some FIXTURES
 WORKLOADS = ['tpcc', 'tpch', 'tatp',
-             'wikipedia', 'resourcestresser', 'twitter',
-             'epinions', 'ycsb', 'seats',
-             'auctionmark', 'chbenchmark', 'voter',
-             'sibench', 'noop', 'smallbank',
-             'hyadapt']
+             'sysbench', 'smallbank', 'ycsb']
 CLUSTERS = ['tidb-1',
             'tidb-2',
             'tidb-3']

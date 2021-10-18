@@ -129,7 +129,7 @@ def load_benchbase_bg(bench_type):
         config_path = SYSBENCH_CONF_PATH
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
         cmd = f"sysbench --config-file={config_path} oltp_point_select " \
-              f"--tables=32 --table-size=10000 prepare > {log_path} 2>&1 &"
+              f"--tables=32 --table-size=1000000 prepare > {log_path} 2>&1 &"
         local(cmd)
     else:
         config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
@@ -147,7 +147,7 @@ def run_benchbase_bg(bench_type, sysbench_run_type):
         config_path = SYSBENCH_CONF_PATH
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
         cmd = f"sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
-              f"--tables=32 --table-size=10000 run > {log_path} 2>&1 &"
+              f"--tables=32 --table-size=1000000 run > {log_path} 2>&1 &"
         local(cmd)
     else:
         config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')

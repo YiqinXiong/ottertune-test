@@ -8,6 +8,7 @@ Created on Mar 23, 2018
 
 @author: bohan
 '''
+import datetime
 import glob
 import json
 import os
@@ -150,6 +151,11 @@ def run_benchbase_bg(bench_type, sysbench_run_type):
         cmd = f"sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
               f"--tables=32 --table-size=10000000 run > {log_path} 2>&1 &"
         local(cmd)
+        # 移动日志位置
+        log_dir = os.path.join(BENCHBASE_HOME, 'log')
+        nowtime = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        local(f'cp {config_path} {log_dir}/{bench_type}_{nowtime}.{sysbench_run_type}.config')
+        local(f'cp {log_path} {log_dir}/{bench_type}_{nowtime}.{sysbench_run_type}.log')
     else:
         config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')

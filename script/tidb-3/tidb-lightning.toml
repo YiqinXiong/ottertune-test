@@ -7,8 +7,8 @@ backend = "local"
 sorted-kv-dir = "/data1/sorted-kv-dir-3"
 
 [mydumper]
-data-source-dir = "/data1/tidb-3/"
-filter = ['*.*', '!pingcap*.*', '!test*.*', '!mysql*.*', '!sys*.*', '!INFORMATION_SCHEMA*.*', '!PERFORMANCE_SCHEMA*.*', '!METRICS_SCHEMA*.*', '!INSPECTION_SCHEMA*.*']
+data-source-dir = "/data1/ycsb"
+filter = [ "*.*", "!pingcap*.*", "!test*.*", "!mysql*.*", "!sys*.*", "!INFORMATION_SCHEMA*.*", "!PERFORMANCE_SCHEMA*.*", "!METRICS_SCHEMA*.*", "!INSPECTION_SCHEMA*.*",]
 
 [tidb]
 host = "192.168.0.19"

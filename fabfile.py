@@ -141,7 +141,9 @@ def load_benchbase_bg(bench_type):
 
 
 @task
-def run_benchbase_bg(bench_type, cluster_name='', sysbench_run_type=''):
+def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=''):
+    if bench_tool not in ['benchbase', 'tiupbench']:
+        raise Exception(f"Bench tool {bench_tool} Not Supported !")
     if cluster_name != '' and cluster_name not in CLUSTERS:
         raise Exception(f"Cluster name {cluster_name} Not Supported !")
 
@@ -159,15 +161,19 @@ def run_benchbase_bg(bench_type, cluster_name='', sysbench_run_type=''):
         local(f'cp {config_path} {result_dir}/{bench_type}_{nowtime}.{sysbench_run_type}.config')
         local(f'cp {log_path} {result_dir}/{bench_type}_{nowtime}.{sysbench_run_type}.log')
     else:
-        if cluster_name == '':
-            config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
-        else:
-            config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config.xml')
+        if bench_tool == 'benchbase':
+            if cluster_name == '':
+                config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
+            else:
+                config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config.xml')
 
-        log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
-        cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --execute=true -s 5 > {log_path} 2>&1 &"
-        with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
-            local(cmd)
+            log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
+            cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --execute=true -s 5 > {log_path} 2>&1 &"
+            with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
+                local(cmd)
+        else:
+            run_sql_script('tiup_bench_run.sh', HOSTS[CLUSTERS.index(cluster_name)], '4000', 'tpcc', '400', '1000',
+                           '1h')
 
 
 @task
@@ -184,12 +190,14 @@ def dump_database(bench_type):
 
 
 @task
-def restore_database(bench_type, cluster_name=''):
+def restore_database(bench_tool, bench_type, cluster_name=''):
+    if bench_tool not in ['benchbase', 'tiupbench']:
+        raise Exception(f"Bench tool {bench_tool} Not Supported !")
     if cluster_name == '':
         cluster_name, _ = get_cluster_name_and_host(bench_type)
     elif cluster_name not in CLUSTERS:
         raise Exception(f"Cluster name {cluster_name} Not Supported !")
-    DB_DUMP_DIR = f'/data1/{bench_type}'
+    DB_DUMP_DIR = f'/data1/{bench_type}' if bench_tool == 'benchbase' else f'/data1/{bench_type}-tiupbench'
     TIDB_LIGHTNING_CONF = os.path.join(TEST_HOME, f'script/{cluster_name}/tidb-lightning.toml')
 
     # 改变lightning的数据源目录，和负载类型保持一致
@@ -236,11 +244,13 @@ def clean_conf(bench_type):
 
 
 @task
-def run(bench_type, cluster_name='', sysbench_run_type=''):
+def run(bench_tool, bench_type, cluster_name='', sysbench_run_type=''):
+    if bench_tool not in ['benchbase', 'tiupbench']:
+        raise Exception(f"Bench tool {bench_tool} Not Supported !")
     # 导入测试数据（需保证数据存在、lightning toml中data_dir正确）
-    restore_database(bench_type, cluster_name)
+    restore_database(bench_tool, bench_type, cluster_name)
     # 运行测试，结果导出在BENCHBASE_HOME/log/{bench_type}_run.log
-    run_benchbase_bg(bench_type, cluster_name, sysbench_run_type)
+    run_benchbase_bg(bench_tool, bench_type, cluster_name, sysbench_run_type)
 
 
 @task

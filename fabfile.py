@@ -90,14 +90,13 @@ def restart_database(db_seq_num):
 
 
 @task
-def drop_database(bench_type):
+def drop_database(cluster_name):
     # local(
     #     "mysql --user={} --password={} -h {} -P {} -e 'drop database if exists {}'".format(dconf.DB_USER,
     #                                                                                        dconf.DB_PASSWORD,
     #                                                                                        dconf.DB_HOST,
     #                                                                                        dconf.DB_PORT,
     #                                                                                        dconf.DB_NAME))
-    cluster_name, host_name = get_cluster_name_and_host(bench_type)
 
     # local("tiup cluster clean {} --all --ignore-role prometheus --yes".format(dconf.TIDB_CLUSTER_NAME))
     # local("tiup cluster start {}".format(dconf.TIDB_CLUSTER_NAME))
@@ -142,7 +141,10 @@ def load_benchbase_bg(bench_type):
 
 
 @task
-def run_benchbase_bg(bench_type, sysbench_run_type):
+def run_benchbase_bg(bench_type, cluster_name='', sysbench_run_type=''):
+    if cluster_name != '' and cluster_name not in CLUSTERS:
+        raise Exception(f"Cluster name {cluster_name} Not Supported !")
+
     if bench_type == 'sysbench':
         if sysbench_run_type not in SYSBENCH_RUN_TYPE:
             raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
@@ -157,7 +159,11 @@ def run_benchbase_bg(bench_type, sysbench_run_type):
         local(f'cp {config_path} {result_dir}/{bench_type}_{nowtime}.{sysbench_run_type}.config')
         local(f'cp {log_path} {result_dir}/{bench_type}_{nowtime}.{sysbench_run_type}.log')
     else:
-        config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
+        if cluster_name == '':
+            config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{bench_type}_config.xml')
+        else:
+            config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config.xml')
+
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
         cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --execute=true -s 5 > {log_path} 2>&1 &"
         with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
@@ -178,8 +184,11 @@ def dump_database(bench_type):
 
 
 @task
-def restore_database(bench_type):
-    cluster_name, host_name = get_cluster_name_and_host(bench_type)
+def restore_database(bench_type, cluster_name=''):
+    if cluster_name == '':
+        cluster_name, _ = get_cluster_name_and_host(bench_type)
+    elif cluster_name not in CLUSTERS:
+        raise Exception(f"Cluster name {cluster_name} Not Supported !")
     DB_DUMP_DIR = f'/data1/{bench_type}'
     TIDB_LIGHTNING_CONF = os.path.join(TEST_HOME, f'script/{cluster_name}/tidb-lightning.toml')
 
@@ -197,7 +206,7 @@ def restore_database(bench_type):
     LOG.info('Start restoring database')
 
     # 导入前先删除原有数据库
-    drop_database(bench_type)
+    drop_database(cluster_name)
     LOG.info('Database %s has been dropped before restore %s.', bench_type, dumpfile)
     # 然后使用tidb_lightning导入数据
     lightning_checkpoint_path = f'/tmp/{cluster_name}_lightning_checkpoint.pb'
@@ -207,7 +216,7 @@ def restore_database(bench_type):
     err_times = 0
     while res.failed and err_times < 3:
         # run_sql_script('tidb_lightning_switch_mode.sh')
-        drop_database(bench_type)
+        drop_database(cluster_name)
         LOG.info('Database %s has been dropped before restore %s.', bench_type, dumpfile)
         local(f"rm -rf {lightning_checkpoint_path}")
         LOG.info('Cleaned tidb_lightning error check points! Now try it again...')
@@ -227,11 +236,11 @@ def clean_conf(bench_type):
 
 
 @task
-def run(bench_type, sysbench_run_type=''):
+def run(bench_type, cluster_name='', sysbench_run_type=''):
     # 导入测试数据（需保证数据存在、lightning toml中data_dir正确）
-    restore_database(bench_type)
+    restore_database(bench_type, cluster_name)
     # 运行测试，结果导出在BENCHBASE_HOME/log/{bench_type}_run.log
-    run_benchbase_bg(bench_type, sysbench_run_type)
+    run_benchbase_bg(bench_type, cluster_name, sysbench_run_type)
 
 
 @task

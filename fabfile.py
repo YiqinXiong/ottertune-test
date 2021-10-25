@@ -141,7 +141,7 @@ def load_benchbase_bg(bench_type):
 
 
 @task
-def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=''):
+def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type='', tiupbench_con=1000):
     if bench_tool not in ['benchbase', 'tiupbench']:
         raise Exception(f"Bench tool {bench_tool} Not Supported !")
     if cluster_name != '' and cluster_name not in CLUSTERS:
@@ -172,7 +172,8 @@ def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=
             with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
                 local(cmd)
         else:
-            run_sql_script('tiup_bench_run.sh', HOSTS[CLUSTERS.index(cluster_name)], '4000', 'tpcc', '1000', '1000',
+            run_sql_script('tiup_bench_run.sh', HOSTS[CLUSTERS.index(cluster_name)], '4000', 'tpcc', '1000',
+                           f'{tiupbench_con}',
                            '1h')
 
 

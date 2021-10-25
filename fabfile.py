@@ -177,9 +177,11 @@ def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=
 
 
 @task
-def dump_database(bench_type):
+def dump_database(bench_type, cluster_name=''):
+    if cluster_name != '' and cluster_name not in CLUSTERS:
+        raise Exception(f"Cluster name {cluster_name} Not Supported !")
     DB_DUMP_DIR = f'/data1/{bench_type}'
-    _, host_name = get_cluster_name_and_host(bench_type)
+    host_name = HOSTS[CLUSTERS.index(cluster_name)]
     LOG.info('Dump database %s to %s by using tiup dumpling', bench_type, DB_DUMP_DIR)
     local('tiup dumpling -u {} --host {} -P {} -F {} -t {} -o {}'.format('root',
                                                                          host_name,

@@ -41,7 +41,6 @@ BENCHBASE_LOG_DIR = os.path.join(BENCHBASE_HOME, 'log')
 TEST_HOME = os.path.dirname(os.path.realpath(__file__))
 TEST_LOG_DIR = os.path.join(TEST_HOME, 'log')
 TEST_LOG_PATH = os.path.join(TEST_LOG_DIR, 'test.log')
-SYSBENCH_CONF_PATH = os.path.join(TEST_HOME, 'sysbench_config')
 SYSBENCH_RUN_TYPE = ['point_select', 'update_index', 'read_only', 'read_write', 'write_only']
 
 # Fabric settings
@@ -123,11 +122,11 @@ def change_conf(bench_type):
 
 
 @task
-def load_benchbase_bg(bench_type):
+def load_benchbase_bg(bench_tool, bench_type, cluster_name=''):
     create_database(bench_type)
 
     if bench_type == 'sysbench':
-        config_path = SYSBENCH_CONF_PATH + '_load'
+        config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config_load')
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_load.log')
         cmd = f"sysbench --config-file={config_path} oltp_point_select " \
               f"--tables=32 --table-size=10000000 prepare > {log_path} 2>&1 &"
@@ -150,7 +149,7 @@ def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=
     if bench_type == 'sysbench':
         if sysbench_run_type not in SYSBENCH_RUN_TYPE:
             raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
-        config_path = SYSBENCH_CONF_PATH + '_run'
+        config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config_run')
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run_{sysbench_run_type}.log')
         cmd = f"sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
               f"--tables=32 --table-size=10000000 run > {log_path} 2>&1 &"
@@ -257,8 +256,8 @@ def run(bench_tool, bench_type, cluster_name='', sysbench_run_type=''):
 
 
 @task
-def load(bench_type):
+def load(bench_tool, bench_type, cluster_name=''):
     # 导入前先删除原有数据库
     drop_database(bench_type)
     # 执行load操作
-    load_benchbase_bg(bench_type)
+    load_benchbase_bg(bench_tool, bench_type, cluster_name)

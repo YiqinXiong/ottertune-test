@@ -41,7 +41,8 @@ BENCHBASE_LOG_DIR = os.path.join(BENCHBASE_HOME, 'log')
 TEST_HOME = os.path.dirname(os.path.realpath(__file__))
 TEST_LOG_DIR = os.path.join(TEST_HOME, 'log')
 TEST_LOG_PATH = os.path.join(TEST_LOG_DIR, 'test.log')
-SYSBENCH_RUN_TYPE = ['point_select', 'update_index', 'read_only', 'read_write', 'write_only']
+SYSBENCH_RUN_TYPE = ['oltp_point_select', 'oltp_update_index', 'oltp_read_only', 'oltp_read_write', 'oltp_write_only',
+                     'select_random_points', 'select_random_ranges', 'bulk_insert', 'oltp_insert']
 
 # Fabric settings
 fabric_output.update({
@@ -151,8 +152,8 @@ def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=
             raise Exception(f"Sysbench run type {sysbench_run_type} Not Supported !")
         config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config_run')
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run_{sysbench_run_type}.log')
-        cmd = f"sysbench --config-file={config_path} oltp_{sysbench_run_type} " \
-              f"--tables=32 --table-size=10000000 run > {log_path} 2>&1 &"
+        cmd = f"sysbench --config-file={config_path} {sysbench_run_type} " \
+              f"--tables=32 --table-size=10000000 run > {log_path} 2>&1"
         local(cmd)
         # 移动日志位置
         result_dir = os.path.join(BENCHBASE_HOME, 'results')

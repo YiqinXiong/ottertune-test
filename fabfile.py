@@ -141,7 +141,7 @@ def load_benchbase_bg(bench_tool, bench_type, cluster_name=''):
 
 
 @task
-def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type='', tiupbench_con=1000):
+def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type='', tiupbench_con=1000, params=''):
     if bench_tool not in ['benchbase', 'tiupbench']:
         raise Exception(f"Bench tool {bench_tool} Not Supported !")
     if cluster_name != '' and cluster_name not in CLUSTERS:
@@ -153,7 +153,7 @@ def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=
         config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config_run')
         log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run_{sysbench_run_type}.log')
         cmd = f"sysbench --config-file={config_path} {sysbench_run_type} " \
-              f"--tables=32 --table-size=10000000 run > {log_path} 2>&1"
+              f"--tables=32 --table-size=10000000 {params} run > {log_path} 2>&1"
         local(cmd)
         # 移动日志位置
         result_dir = os.path.join(BENCHBASE_HOME, 'results')
@@ -262,3 +262,20 @@ def load(bench_tool, bench_type, cluster_name=''):
     drop_database(bench_type)
     # 执行load操作
     load_benchbase_bg(bench_tool, bench_type, cluster_name)
+
+
+@task
+def run_test_curr(bench_tool='benchbase', bench_type='sysbench', cluster_name='tidb-2',
+                  sysbench_run_type='select_random_ranges', params='--delta=5000000 --time=600'):
+    val_list = [30, 15, 8, 4, 2, 1]
+    host_name = HOSTS[CLUSTERS.index(cluster_name)]
+    for val in val_list:
+        local("mysql --user={} --password={} -h {} -P {} -e 'set @@global.tidb_distsql_scan_concurrency={};'".format(
+            'root',
+            '',
+            host_name,
+            '4000',
+            val))
+        time.sleep(20)
+        run_benchbase_bg(bench_tool, bench_type, cluster_name, sysbench_run_type, params=params)
+        time.sleep(40)

@@ -293,7 +293,7 @@ def run_with_patch(times):
     for t in range(times):
         # test
         for patch_path in patch_paths:
-            run_sql_script('change_tidb_cnf.sh', 'tidb-1', patch_path)
+            run_sql_script('patch_tikv.sh', 'tidb-1', patch_path)
             time.sleep(30)
             run_benchbase_bg('benchbase', 'tpcc', 'tidb-1')
             time.sleep(30)

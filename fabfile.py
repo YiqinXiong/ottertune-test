@@ -169,7 +169,7 @@ def run_benchbase_bg(bench_tool, bench_type, cluster_name='', sysbench_run_type=
                 config_path = os.path.join(BENCHBASE_HOME, f'config/tidb/{cluster_name}/{bench_type}_config.xml')
 
             log_path = os.path.join(BENCHBASE_HOME, f'log/{bench_type}_run.log')
-            cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --execute=true -s 5 > {log_path} 2>&1 &"
+            cmd = f"java -jar benchbase.jar -b {bench_type} -c {config_path} --execute=true -s 5 > {log_path} 2>&1"
             with lcd(BENCHBASE_HOME):  # pylint: disable=not-context-manager
                 local(cmd)
         else:

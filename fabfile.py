@@ -286,7 +286,8 @@ def run_test_curr(bench_tool='benchbase', bench_type='sysbench', cluster_name='t
 
 @task
 def run_with_patch(times):
-    assert isinstance(times, int)
+    times = int(times)
+    # assert isinstance(times, int)
     patch_dir = '/data1/workspace'
     patch_paths = [os.path.join(patch_dir, 'tikv-server-master-old.tar.gz'),
                    os.path.join(patch_dir, 'tikv-server-optimizer-2.tar.gz')]

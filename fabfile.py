@@ -292,9 +292,12 @@ def run_with_patch(times):
     patch_paths = [os.path.join(patch_dir, 'tikv-server-master-old.tar.gz'),
                    os.path.join(patch_dir, 'tikv-server-optimizer-2.tar.gz')]
     for t in range(times):
+        LOG.info(f'Loop {t+1}/{times} begin...')
         # test
         for patch_path in patch_paths:
             run_sql_script('patch_tikv.sh', 'tidb-1', patch_path)
+            LOG.info(f'Loop {t + 1}/{times}: {patch_path} patched!')
             time.sleep(30)
             run_benchbase_bg('benchbase', 'tpcc', 'tidb-1')
+            LOG.info(f'Loop {t + 1}/{times}: test finished!')
             time.sleep(30)
